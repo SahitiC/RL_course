@@ -5,6 +5,7 @@ import environment
 import util
 import optparse
 import numpy as np
+import matplotlib.pyplot as plt
 
 from gridworldClass import Gridworld
 
@@ -440,6 +441,12 @@ if __name__ == "__main__":
 
     # Exercise 1: implement the mean and std of the value estimation for the start state and print it out
     #  check what runEpisode returns
+    # mean_returns = []
+    # std_returns = []
+    # numeps = []
+    # for numep in range(10, 10000, 100):
+    #     print(numep)
+    #     numeps.append(numep)
     returns = []
     for episode in range(1, opts.episodes + 1):
         ep_return = runEpisode(
@@ -458,4 +465,17 @@ if __name__ == "__main__":
         # print here
         pass
 
-    print(np.mean(returns), np.std(returns))
+    mean_ret = np.mean(returns)
+    std_ret = np.std(returns)
+
+    print("Mean returns:", mean_ret)
+    print("Std returns:", std_ret)
+
+    # mean_returns.append(mean_ret)
+    # std_returns.append(std_ret)
+
+    # plt.figure()
+    # plt.plot(numeps, mean_returns)
+    # plt.figure()
+    # plt.plot(numeps, std_returns)
+    # plt.show()
