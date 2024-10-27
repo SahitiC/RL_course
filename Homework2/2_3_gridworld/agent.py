@@ -79,8 +79,10 @@ class ValueIterationAgent(Agent):
         self.mdp = mdp
         self.discount = discount
         self.iterations = iterations
+        threshold = 0.1
 
-        self.states = mdp.getStates()
+        self.states = mdp.getStates()  # states are tuples (i, j) on the grid
+
         self.value = {s: 0 for s in self.states}
         self.qvalue = {
             (s, a): 0 for s in self.states for a in mdp.getPossibleActions(s)
@@ -90,18 +92,30 @@ class ValueIterationAgent(Agent):
             self.previous_value = self.value.copy()
             print(iters, self.value)
             for state in self.states:
-                for action in mdp.getPossibleActions(state):
-                    self.qvalue[state, action] = self.getQValue(state, action)
-                self.value[state] = self.getValue(state)
-            if self.value == self.previous_value:
+                actions = mdp.getPossibleActions(state)
+                if len(actions) != 0:
+                    for action in actions:
+                        self.qvalue[state, action] = self.getQValue(state, action)
+                    self.value[state] = self.getValue(state)
+
+            unchanged = True
+            for key in self.value:
+                if abs(self.value[key] - self.previous_value[key]) > threshold:
+                    unchanged = False
+                    break
+
+            if unchanged:
                 break
+        print("Number of iterations:", iters + 1)
 
     def getValue(self, state):
         """
         Look up the value of the state (after the indicated
         number of value iteration passes).
         """
-        return np.max(self.qvalue[state, :])
+        return np.max(
+            [self.qvalue[state, a] for a in self.mdp.getPossibleActions(state)]
+        )
 
     def getQValue(self, state, action):
         """
@@ -114,10 +128,11 @@ class ValueIterationAgent(Agent):
         model = self.mdp.getTransitionStatesAndProbs(state, action)
         for s_, p in model:
             self.qvalue[state, action] += p * self.value[s_]  # Bellman update
-        return (
+        self.qvalue[state, action] = (
             self.mdp.getReward(state, action, None)
             + self.discount * self.qvalue[state, action]
         )
+        return self.qvalue[state, action]
 
     def getPolicy(self, state):
         """
