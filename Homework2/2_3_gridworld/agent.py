@@ -114,8 +114,9 @@ class ValueIterationAgent(Agent):
         model = self.mdp.getTransitionStatesAndProbs(state, action)
         for s_, p in model:
             self.qvalue[state, action] += p * self.value[s_]  # Bellman update
-        return self.discount * self.qvalue[state, action] + self.mdp.getReward(
-            state, action, None
+        return (
+            self.mdp.getReward(state, action, None)
+            + self.discount * self.qvalue[state, action]
         )
 
     def getPolicy(self, state):
