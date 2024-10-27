@@ -1,4 +1,5 @@
 import util, random
+import numpy as np
 
 class Agent:
 
@@ -77,10 +78,37 @@ class ValueIterationAgent(Agent):
     self.discount = discount
     self.iterations = iterations
 
-    raise ValueError("Your code here.")
+    states = mdp.getStates()
+    value = {state: 0 for state in states}
 
-
-
+    for iters in range(iterations):
+        
+        print(iters, value)
+        
+        for state in states:
+        
+            actions = mdp.getPossibleActions(state)
+            if len(actions) == 0: continue
+        
+            q = np.zeros(np.shape(actions))
+            
+            for i_action, action in enumerate(actions):
+                
+                model = mdp.getTransitionStatesAndProbs(state, action)
+                next_states = [item[0] for item in model]
+                trans_prob = [item[1] for item in model]
+                
+                q[i_action] = mdp.getReward(state, action, None)
+                
+                for i_n, nexts in enumerate(next_states):  
+                    
+                    # Bellman update
+                    q[i_action] += trans_prob[i_n] * (discount * value[nexts])
+                
+            # Bellman optimality equation
+            value[state] = np.max(q)
+            
+            
   def getValue(self, state):
     """
     Look up the value of the state (after the indicated
