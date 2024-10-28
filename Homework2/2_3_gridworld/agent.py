@@ -102,18 +102,18 @@ class ValueIterationAgent(Agent):
                         model = self.mdp.getTransitionStatesAndProbs(state, action)
 
                         for s_, p in model:
-                            self.qvalue[state, action] += (
+                            self.qvalue[(state, action)] += (
                                 p * self.value[s_]
                             )  # Bellman update
 
-                        self.qvalue[state, action] = (
+                        self.qvalue[(state, action)] = (
                             self.mdp.getReward(state, action, None)
-                            + self.discount * self.qvalue[state, action]
+                            + self.discount * self.qvalue[(state, action)]
                         )
 
                     self.value[state] = np.max(
                         [
-                            self.qvalue[state, a]
+                            self.qvalue[(state, a)]
                             for a in self.mdp.getPossibleActions(state)
                         ]
                     )
@@ -151,12 +151,10 @@ class ValueIterationAgent(Agent):
         (after the indicated number of value iteration passes).
         """
         if len(self.mdp.getPossibleActions(state)) != 0:
-            # print([self.qvalue[state, a] for a in self.mdp.getPossibleActions(state)])
-
             maxqval = np.inf * -1
             for a in self.mdp.getPossibleActions(state):
-                if self.qvalue[state, a] > maxqval:
-                    maxqval = self.qvalue[state, a]
+                if self.qvalue[(state, a)] > maxqval:
+                    maxqval = self.qvalue[(state, a)]
                     maxaction = a
             return maxaction
 
