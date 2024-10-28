@@ -373,7 +373,7 @@ if __name__ == "__main__":
 
     a = None
     if opts.agent == "value":
-        a = agent.ValueIterationAgent(mdp, opts.discount, 1000)
+        a = agent.ValueIterationAgent(mdp, opts.discount, opts.iters)
     elif opts.agent == "q":
         a = agent.QLearningAgent(
             env.getPossibleActions, opts.discount, opts.learningRate, opts.epsilon
@@ -391,20 +391,27 @@ if __name__ == "__main__":
     ###########################
 
     # DISPLAY Q/V VALUES BEFORE SIMULATION OF EPISODES
-    # if opts.agent == 'value':
-    #   display.displayValues(a, message = "VALUES AFTER "+str(opts.iters)+" ITERATIONS")
-    #   display.pause()
-    #   display.displayQValues(a, message = "Q-VALUES AFTER "+str(opts.iters)+" ITERATIONS")
-    #   display.pause()
+    if opts.agent == "value":
+        display.displayValues(
+            a, message="VALUES AFTER " + str(opts.iters) + " ITERATIONS"
+        )
+        display.pause()
+        display.displayQValues(
+            a, message="Q-VALUES AFTER " + str(opts.iters) + " ITERATIONS"
+        )
+        display.pause()
 
-    # # FIGURE OUT WHAT TO DISPLAY EACH TIME STEP (IF ANYTHING)
+    # FIGURE OUT WHAT TO DISPLAY EACH TIME STEP (IF ANYTHING)
     displayCallback = lambda x: None
     if not opts.quiet:
         if opts.agent == "random":
             displayCallback = lambda state: display.displayValues(
                 a, state, "CURRENT VALUES"
             )
-        #   if opts.agent == 'value': displayCallback = lambda state: display.displayValues(a, state, "CURRENT VALUES")
+        if opts.agent == "value":
+            displayCallback = lambda state: display.displayValues(
+                a, state, "CURRENT VALUES"
+            )
         if opts.agent == "q":
             displayCallback = lambda state: display.displayQValues(
                 a, state, "CURRENT Q-VALUES"

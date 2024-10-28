@@ -79,7 +79,7 @@ class ValueIterationAgent(Agent):
         self.mdp = mdp
         self.discount = discount
         self.iterations = iterations
-        threshold = 0.1
+        threshold = 0.001
 
         self.states = mdp.getStates()  # states are tuples (i, j) on the grid
 
@@ -90,16 +90,22 @@ class ValueIterationAgent(Agent):
 
         for iters in range(self.iterations):
             self.previous_value = self.value.copy()
-            print(iters, self.value)
+            print(iters)
+            print(self.value)
+
             for state in self.states:
                 actions = mdp.getPossibleActions(state)
                 if len(actions) != 0:
                     for action in actions:
+                        self.qvalue[(state, action)] = 0
+
                         model = self.mdp.getTransitionStatesAndProbs(state, action)
+
                         for s_, p in model:
                             self.qvalue[state, action] += (
                                 p * self.value[s_]
                             )  # Bellman update
+
                         self.qvalue[state, action] = (
                             self.mdp.getReward(state, action, None)
                             + self.discount * self.qvalue[state, action]
@@ -144,7 +150,15 @@ class ValueIterationAgent(Agent):
         Look up the policy's recommendation for the state
         (after the indicated number of value iteration passes).
         """
-        raise ValueError("Your code here.")
+        if len(self.mdp.getPossibleActions(state)) != 0:
+            # print([self.qvalue[state, a] for a in self.mdp.getPossibleActions(state)])
+
+            maxqval = np.inf * -1
+            for a in self.mdp.getPossibleActions(state):
+                if self.qvalue[state, a] > maxqval:
+                    maxqval = self.qvalue[state, a]
+                    maxaction = a
+            return maxaction
 
     def getAction(self, state):
         """
