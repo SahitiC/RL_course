@@ -93,6 +93,15 @@ def getMazeGrid():
     return Gridworld(grid)
 
 
+def getTreasureGrid():
+  grid = [[' ',' ',' ',10],
+          [' ',' ',-8,' '],
+          ['S',' ',' ',' '],
+          [' ',' ', 8,' '],
+          [' ',' ',' ',-10]]
+  return Gridworld(grid)
+
+
 def getUserAction(state, actionFunction):
     """
     Get an action from the user (rather than the agent).
@@ -257,7 +266,7 @@ def parseOptions():
         type="string",
         dest="grid",
         default="BookGrid",
-        help="Grid to use (case sensitive; options are BookGrid, BridgeGrid, CliffGrid, MazeGrid, default %default)",
+        help="Grid to use (case sensitive; options are BookGrid, BridgeGrid, CliffGrid, MazeGrid, TreasureGrid, default %default)",
     )
     optParser.add_option(
         "-w",
