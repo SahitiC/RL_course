@@ -95,8 +95,22 @@ class ValueIterationAgent(Agent):
                 actions = mdp.getPossibleActions(state)
                 if len(actions) != 0:
                     for action in actions:
-                        self.qvalue[state, action] = self.getQValue(state, action)
-                    self.value[state] = self.getValue(state)
+                        model = self.mdp.getTransitionStatesAndProbs(state, action)
+                        for s_, p in model:
+                            self.qvalue[state, action] += (
+                                p * self.value[s_]
+                            )  # Bellman update
+                        self.qvalue[state, action] = (
+                            self.mdp.getReward(state, action, None)
+                            + self.discount * self.qvalue[state, action]
+                        )
+
+                    self.value[state] = np.max(
+                        [
+                            self.qvalue[state, a]
+                            for a in self.mdp.getPossibleActions(state)
+                        ]
+                    )
 
             unchanged = True
             for key in self.value:
@@ -113,9 +127,7 @@ class ValueIterationAgent(Agent):
         Look up the value of the state (after the indicated
         number of value iteration passes).
         """
-        return np.max(
-            [self.qvalue[state, a] for a in self.mdp.getPossibleActions(state)]
-        )
+        return self.value[state]
 
     def getQValue(self, state, action):
         """
@@ -125,14 +137,7 @@ class ValueIterationAgent(Agent):
         necessarily create this quantity and you may have
         to derive it on the fly.
         """
-        model = self.mdp.getTransitionStatesAndProbs(state, action)
-        for s_, p in model:
-            self.qvalue[state, action] += p * self.value[s_]  # Bellman update
-        self.qvalue[state, action] = (
-            self.mdp.getReward(state, action, None)
-            + self.discount * self.qvalue[state, action]
-        )
-        return self.qvalue[state, action]
+        return self.qvalue[(state, action)]
 
     def getPolicy(self, state):
         """
