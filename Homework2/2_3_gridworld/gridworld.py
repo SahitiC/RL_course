@@ -93,7 +93,7 @@ def getMazeGrid():
     return Gridworld(grid)
 
 
-def getTreasureGrid():
+def getHorizonGrid():
   grid = [[' ',' ',' ',10],
           [' ',' ',-8,' '],
           ['S',' ',' ',' '],
@@ -266,7 +266,7 @@ def parseOptions():
         type="string",
         dest="grid",
         default="BookGrid",
-        help="Grid to use (case sensitive; options are BookGrid, BridgeGrid, CliffGrid, MazeGrid, TreasureGrid, default %default)",
+        help="Grid to use (case sensitive; options are BookGrid, BridgeGrid, CliffGrid, MazeGrid, HorizonGrid, default %default)",
     )
     optParser.add_option(
         "-w",
