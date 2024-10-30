@@ -387,7 +387,6 @@ if __name__ == "__main__":
     import agent
 
     a = None
-    print(opts.agent)
     if opts.agent == "value":
         print("hi")
         a = agent.ValueIterationAgent(mdp, opts.discount, opts.iters)
