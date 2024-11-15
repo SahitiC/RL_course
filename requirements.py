@@ -1,3 +1,4 @@
 tk
 numpy
 matplotlib
+seaborn
