@@ -240,7 +240,7 @@ class QLearningAgent(Agent):
 
     #raise ValueError("Your code here.")
     actions = self.actionFunction(state)
-    # epsolon-greedy
+    # epsilon-greedy
     if random.random() < self.epsilon:
       return random.choice(actions)
     else:
