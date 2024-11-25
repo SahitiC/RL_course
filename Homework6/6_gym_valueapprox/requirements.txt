@@ -1,7 +1,7 @@
 matplotlib
 numpy
-box2d-py
 swig
+box2d-py
 pygame
 gymnasium
 tensorboardx
