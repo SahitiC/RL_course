@@ -47,7 +47,7 @@ class ActorCritic(nn.Module):
                 )
 
     def forward(self):
-        raise NotImplementedError 
+        raise NotImplementedError
 
     def act(self, state, memory):
         state = torch.from_numpy(state).float().to(device)
@@ -108,25 +108,17 @@ class PPO:
 
         # Optimize policy for K epochs:
         for _ in range(self.K_epochs):
-            # TODO: fill this code
-
-            # Evaluating old actions and values: use policy.evaluate
+            # Evaluating old actions and values :
             logprobs, state_values, dist_entropy = self.policy.evaluate(old_states, old_actions)
 
-            # Hints:
-            #  for the ratio (pi_theta / pi_theta__old), note that you have log probabilities given
-            #  compute the advantage using the Monte-Carlo Advantage Estimator
-            #  you don't want to backpropagate through the values here, so use detach()
-            #  compute the two objectives, normal and clipped
-            advantage = rewards - state_values.detach()
-            ratio = torch.exp(logprobs-old_logprobs.detach())
+            # Finding the ratio (pi_theta / pi_theta__old):
+            ratios = torch.exp(logprobs - old_logprobs.detach())
 
-            objective = ratio*advantage
-            objective_clipped = torch.clip(ratio, 1-self.eps_clip, 1+self.eps_clip)*advantage
-
-            # --- the rest is given
-            # the loss is given for you with the magic constants for the value function term and the policy entropy term
-            loss = -torch.min(objective, objective_clipped) + 0.5*self.MseLoss(state_values, rewards) - 0.01*dist_entropy
+            # Finding Surrogate Loss:
+            advantages = rewards - state_values.detach()
+            surr1 = ratios * advantages
+            surr2 = torch.clamp(ratios, 1-self.eps_clip, 1+self.eps_clip) * advantages
+            loss = -torch.min(surr1, surr2) + 0.5*self.MseLoss(state_values, rewards) - 0.01*dist_entropy
 
             # take gradient step
             self.optimizer.zero_grad()
@@ -136,19 +128,21 @@ class PPO:
         # Copy new weights into old policy:
         self.policy_old.load_state_dict(self.policy.state_dict())
 
+
 def main():
     optParser = optparse.OptionParser()
     optParser.add_option('-e', '--env',action='store', type='string',
-                         dest='env_name',default="LunarLander-v3",
+                         dest='env_name',default="LunarLander-v2",
                          help='Environment (default %default)')
     optParser.add_option('-c', '--eps',action='store',  type='float',
                          dest='eps_clip',default=0.2,
                          help='Clipping epsilon (default %default)')
-    # TODO: Consider adding suitable cmd line arguments
+    optParser.add_option('-k', '--epochs',action='store',  type='int',
+                         dest='epochs',default=10,
+                         help='number of training epochs per update (default %default)')
     optParser.add_option('-s', '--seed',action='store',  type='int',
-                        dest='random_seed',default=None,
-                        help='Random seed (default %default)')
-
+                         dest='seed',default=None,
+                         help='random seed (default %default)')
     opts, args = optParser.parse_args()
     ############## Hyperparameters ##############
     env_name = opts.env_name
@@ -166,9 +160,9 @@ def main():
     lr = 0.002
     betas = (0.9, 0.999)
     gamma = 0.99                # discount factor
-    K_epochs = 10               # update policy for K epochs
+    K_epochs = opts.epochs      # update policy every K epochs
     eps_clip = opts.eps_clip    # clip parameter for PPO
-    random_seed = opts.random_seed
+    random_seed = opts.seed
     #############################################
 
 
@@ -186,10 +180,8 @@ def main():
     timestep = 0
 
     def save_statistics():
-        with open(f"./results/PPO_{env_name}-eps{eps_clip}-seed{random_seed}-stat.pkl", 'wb') as f:
-            pickle.dump({"rewards" : rewards, "lengths": lengths,
-                         "eps": eps_clip, "seed": random_seed},
-                        f)
+        with open(f"./results/PPO_{env_name}-eps{eps_clip}-k{K_epochs}-s{random_seed}-stat.pkl", 'wb') as f:
+            pickle.dump({"rewards" : rewards, "lengths": lengths, "eps": eps_clip, "epochs": K_epochs}, f)
 
     # training loop
     for i_episode in range(1, max_episodes+1):
@@ -222,7 +214,7 @@ def main():
         # save every 500 episodes
         if i_episode % 500 == 0:
             print("########## Saving a checkpoint... ##########")
-            torch.save(ppo.policy.state_dict(), f'./results/PPO_{env_name}_{i_episode}-eps{eps_clip}-seed{random_seed}.pth')
+            torch.save(ppo.policy.state_dict(), f'./results/PPO_{env_name}_{i_episode}-eps{eps_clip}.pth')
             save_statistics()
 
         # logging
@@ -234,7 +226,7 @@ def main():
             print('Episode {} \t avg length: {} \t reward: {}'.format(i_episode, avg_length, avg_reward))
             if avg_reward > solved_reward:
                 print("########## Solved! ##########")
-                torch.save(ppo.policy.state_dict(), f'./results/PPO_{env_name}-eps{eps_clip}-seed{random_seed}-k{K_epochs}-solved.pth')
+                torch.save(ppo.policy.state_dict(), f'./results/PPO_{env_name}-eps{eps_clip}-k{K_epochs}-solved.pth')
     save_statistics()
 
 if __name__ == '__main__':
