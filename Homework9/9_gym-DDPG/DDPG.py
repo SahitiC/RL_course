@@ -24,6 +24,9 @@ class QFunction(Feedforward):
     def __init__(self, observation_dim, action_dim, hidden_sizes=[100,100],
                  learning_rate = 0.0002):
         # TODO: Setup network with right input and output size (using super().__init__)
+        super().__init__(input_size=observation_dim+action_dim,
+                         hidden_sizes=hidden_sizes,
+                         output_size=1)
 
         # END
         self.optimizer=torch.optim.Adam(self.parameters(),
@@ -47,7 +50,9 @@ class QFunction(Feedforward):
 
     def Q_value(self, observations, actions):
         # TODO: implement the forward pass.
-        pass
+        x = torch.cat((observations, actions), 1)
+        output = self.forward(x)
+        return output
 
 # Ornstein Uhlbeck noise, Nothing to be done here
 class OUNoise():
@@ -123,7 +128,7 @@ class DDPGAgent(object):
         # and makes sure the derivative goes to zero at the boundaries
         # Use Tanh, which is between -1 and 1 and scale it to [low, high]
         # Hint: use torch.nn.Tanh()(x)
-        output_activation = lambda x: pass
+        output_activation = lambda x: ((torch.nn.Tanh()(x)+1)/2) * (high - low) + low 
 
         self.policy = Feedforward(input_size=self._obs_dim,
                                   hidden_sizes= self._config["hidden_sizes_actor"],
@@ -149,7 +154,7 @@ class DDPGAgent(object):
 
     def act(self, observation, eps=None):
         # TODO: implement this: use self.action_noise() (which provides normal noise with standard variance)
-
+        return self.policy_target.predict(observation) + self._eps*self.action_noise()
 
     def store_transition(self, transition):
         self.buffer.add_transition(transition)
@@ -183,7 +188,16 @@ class DDPGAgent(object):
             # TODO: Implement the rest of the algorithm
 
             # assign q_loss_value  and actor_loss to we stored in the statistics
+            Q_values = self.Q.Q_value(s, a)
+            max_actions = self.policy_target.forward(s_prime)
+            Q_values_max = self.Q_target.Q_value(s_prime, max_actions)
+            td_target = rew+(1-done)*self._config['discount']*Q_values_max
+            q_loss_value = self.Q.fit(s, a, td_target)
 
+            actor_loss = -self.Q.Q_value(s, self.policy(s)).mean()
+            self.optimizer.zero_grad()
+            actor_loss.backward()
+            self.optimizer.step()
 
             losses.append((q_loss_value , actor_loss.item()))
 
@@ -204,7 +218,7 @@ def main():
     optParser.add_option('-l', '--lr',action='store',  type='float',
                          dest='lr',default=0.0001,
                          help='learning rate for actor/policy (default %default)')
-    optParser.add_option('-m', '--maxepisodes',action='store',  type='float',
+    optParser.add_option('-m', '--maxepisodes',action='store',  type='int',
                          dest='max_episodes',default=2000,
                          help='number of episodes (default %default)')
     optParser.add_option('-u', '--update',action='store',  type='float',
